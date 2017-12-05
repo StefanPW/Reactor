@@ -1,4 +1,3 @@
-
 #Main program
 from reactor import *
 import tkinter as tk
@@ -134,10 +133,11 @@ if __name__ == "__main__":
     #win.geometry(str(int(width))+"x"+str(int(height)))
 
     #Teraz to idzie do obiektu graficznego no ale tymczasowo zostawie to tutaj;
-    reactor = Reactor()
+    inter = 50#Animation will run with inter ms gap
+    reactor = Reactor(inter)
     
     i = 0
-    ani = animation.FuncAnimation(reactor.fig, reactor.animate, interval=int(50), blit = True)#
+    ani = animation.FuncAnimation(reactor.fig, reactor.animate, interval=inter, blit = True)#
     #ani=animation.FuncAnimation(reactor.fig, reactor.animate, interval=(1000/60))
     plt.show()
     #while (True):
@@ -147,13 +147,6 @@ if __name__ == "__main__":
         #i += 1
         #time.sleep(1)
 
-    '''ani = animation.FuncAnimation(fig, animate, interval=40)
-    plt.xlabel('time [s]',fontsize = 16)
-    ax2.set_ylabel('N', fontsize = 16)
-    ax1.set_ylabel('Temperatures [deg. C], reactivity [pcm]', fontsize = 16)
-    plt.xlim(xmin=-1)
-    ax1.set_ylim(ymin=-10, ymax = 1200)
-    plt.show()'''
     #win.mainloop()
     #ani = animation.FuncAnimation(reactor.fig, reactor.animate, interval=(1000/60))
     #plt.show()
@@ -163,10 +156,3 @@ if __name__ == "__main__":
     
 
 #s = input("fdf");
-    #print("Nuclear Reactor Simulator")
-
-    #myFuelRod = FuelRod(10,0)
-    #print(myFuelRod.fuel_count)
-    #myReactor = Reactor(myFuelRod)
-    #dt = 0.1#100ms simulation step
-    #t = 0

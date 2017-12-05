@@ -7,7 +7,7 @@ from matplotlib.lines import Line2D
 class Reactor(object):
     """This class represents a nuclear reactor"""
     
-    def __init__(self, PCM = 8, L = 0.001, rho0 = -1*10E-5, S = 10E5, ne = 3*10E17, dt = 0.01, dataSize = 400):
+    def __init__(self, interval, PCM = 8, L = 0.001, rho0 = -1*10E-5, S = 10E5, ne = 3*10E17, dt = 0.01, dataSize = 400):
         """Constructor"""
          #      TD, Tf, Tc, dTf, dTc, dC1-6, dn, rho, TcIN, W, C1-6  sie zmienia
         #Lot of additional constants etc.
@@ -16,6 +16,7 @@ class Reactor(object):
         self.nt = -1             #negative time
         self.dt = dt
         self.dataSize = dataSize
+        self.interval = interval
         # reactor parameters
         # initial conditions
         self.PCM = PCM
@@ -65,10 +66,6 @@ class Reactor(object):
         self.ax2.add_line(self.lineN)
 
         style.use('fivethirtyeight')
-        #self.fig = plt.figure()
-        #self.ax1 = self.fig.add_subplot(1,1,1)
-        #self.ax2 = self.ax1.twinx()
-        #plt.xlabel('time [s]',fontsize = 16)
         self.ax1.set_xlabel('time [s]',fontsize = 16)
         self.ax2.set_ylabel('N', fontsize = 16)
         self.ax1.set_ylabel('Temperatures [deg. C], reactivity [pcm]', fontsize = 16)
@@ -93,8 +90,6 @@ class Reactor(object):
         if(self.i>self.dataSize): 
             self.popFromLists()
             self.startPoint += self.dt
-        #if(self.i%100 == 0):
-        #    print(len(self.listN))
 
     def update(self, rho):
         #Updating values #W sumie te updaty moznaby cale w 1 linijce
@@ -121,6 +116,7 @@ class Reactor(object):
         self.listR.pop(0)
 
     def init(self):
+        """This function is not actually necessary right now, it was in the past for animation purposes"""
         style.use('fivethirtyeight')
         #self.fig = plt.figure()
         #self.ax1 = self.fig.add_subplot(1,1,1)
@@ -145,30 +141,23 @@ class Reactor(object):
         self.lineR, = self.ax1.plot([], [], lw=2)
         self.lineDT, = self.ax1.plot([], [], lw=2)
         self.lineN, = self.ax2.plot([], [], lw=2)'''
-        #return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
+        return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
 
     def animate(self, i):
-        #self.startPoint = self.nt + (i>40)*(i*self.dt)
-        for i in range(0,10):
+        
+        for i in range(0,int(self.interval/5)):
             self.simulate()
             
-        #speed = (1 - (np.e**(-(self.dt/1)*(self.i + 99))))*((self.i+99)*self.dt)/2
-        #print("Speed: ",speed, (99+self.i)*self.dt, self.i)
-        #self.ax1.set_xlim(xmin= -1 + (1)*self.i*self.dt, xmax = 9 + (1)*self.i*self.dt)
-        #if(self.i%100==0):print("sf: ",(self.i>10/self.dt)*self.i*self.dt)
-        #self.ax1.set_ylim(ymin=-10, ymax = 1200)
         self.x = np.arange(self.startPoint, (self.i-0.5)*self.dt, self.dt)
         self.ax1.set_xlim(xmin = min(self.x), xmax = max(self.x))
-        self.ax2.set_ylim(ymin=0, ymax = max(self.listN)*2)
+        self.ax2.set_ylim(ymin=0, ymax = max(self.listN)*1.5)
         self.lineTf.set_data(self.x,self.listTf)
         self.lineTc.set_data(self.x,self.listTc)
         self.lineR.set_data(self.x,self.listR)
         self.lineDT.set_data(self.x,self.listDT)
         self.lineN.set_data(self.x,self.listN)
-        #self.ax2.plot(self.x, self.listN)
         self.ax1.figure.canvas.draw()
-        #if(self.i%10==0): self.fig.canvas.draw()
-        #plt.axis(xmin = -1+speed, xmax = 9+speed)
+        
         return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
 
     '''def init(self):
