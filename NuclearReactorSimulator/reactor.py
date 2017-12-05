@@ -12,7 +12,6 @@ class Reactor(object):
          #      TD, Tf, Tc, dTf, dTc, dC1-6, dn, rho, TcIN, W, C1-6  sie zmienia
         #Lot of additional constants etc.
         # calculation parameters (one chyba bd i tak przesylane)
-        #self.t = 100             # time [s]
         self.nt = -1             #negative time
         self.dt = dt
         self.dataSize = dataSize
@@ -25,14 +24,58 @@ class Reactor(object):
         self.rho0 = rho0
         self.S = S
 
-        if rho0 < 0: #Ta linijka wlasicwi enie ma znaczneia, jezeli nizej i tak jest na stale przypisywana
+        if rho0 < 0: #Ta linijka wlasicwi nie ma znaczneia, jezeli nizej i tak jest na stale przypisywana
             self.n = -S*L/rho0 # initial neutron population 3*10E17
-        #self.ne = ne zbedne
-        self.n = ne
-        
+        self.n = ne    
         self.neutron = Neutron()
         self.cooler = Cooler(self.n) 
+
+        #Preparing rest variables
+        self.__variablePreapre__()
+        #Preparing plot
+        self.__plotOptions__()
+
+    def simulate(self, fps = 60):
+        """Simulates behaviour of a reactor in dt time step"""
+        #dusturbance introduction
+        #reactitivity     
+        rho = self.cooler.calc_rho(self.i, self.rho0, self.rho1) 
+        if rho == 0:
+            self.TD = 0
+        else:
+            self.TD = self.L/rho + (self.neutron.betaS-rho)/(1.08*rho) #Tutaj zmieniam to: 0.08*self.rho+self.rho na 1.08 rho xd       
+
+        self.__update__(rho) 
+        self.__appendToLists__(rho)
+     
+        self.i += 1
+        if(self.i>self.dataSize): 
+            self.__popFromLists__()
+            self.startPoint += self.dt
+
+    def init(self):
+        """This function is not actually necessary right now, it was in the past for animation purposes"""
+        style.use('fivethirtyeight')
+        self.ax1.set_xlabel('time [s]',fontsize = 16)
+        self.ax2.set_ylabel('N', fontsize = 16)
+        self.ax1.set_ylabel('Temperatures [deg. C], reactivity [pcm]', fontsize = 16)
+        plt.xlim(xmin = -1)
+        self.ax1.set_ylim(ymin=-10, ymax = 1200)
+
+        return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
+
+    def animate(self, i):
+        """Function which is called in each frame of animation"""
+        for i in range(0,int(self.interval/5)): #Simulates self.interval/5*self.dt seconds of simulation  
+            self.simulate()
+            
+        self.__updatePlot__()
+        self.ax1.figure.canvas.draw()
         
+        return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
+
+    def __preapreVariable__(self):
+        """This function prepares variables and sets their values"""
         # initial precursor density
         # e means initial equilibrium value
         self.C = self.n/self.L * (self.neutron.beta[1::]/self.neutron.hl[1::])
@@ -48,6 +91,9 @@ class Reactor(object):
         self.listDT = []
 
         self.i = self.nt/self.dt
+
+    def __preparePlot__(self):
+        """Creates plot and sets all values"""
         #PLOT
         self.fig, self.ax1 = plt.subplots()
         self.ax2 = self.ax1.twinx()
@@ -56,9 +102,9 @@ class Reactor(object):
         self.x = []
         self.lineTf = Line2D(self.x, self.listTf, color = 'g', animated=True, markersize = 1, linewidth = 2)
         self.lineTc = Line2D(self.x, self.listTc, color = 'b', animated=True)
-        self.lineR = Line2D(self.x, self.listR, color = 'm',animated=True)
-        self.lineDT = Line2D(self.x, self.listDT, color = 'y',animated=True)
-        self.lineN = Line2D(self.x, self.listN, color = 'r',animated=True, markersize = 1, linewidth = 2)
+        self.lineR = Line2D(self.x, self.listR, color = 'm', animated=True)
+        self.lineDT = Line2D(self.x, self.listDT, color = 'y', animated=True)
+        self.lineN = Line2D(self.x, self.listN, color = 'r', animated=True, markersize = 1, linewidth = 2)
         self.ax1.add_line(self.lineTf)
         self.ax1.add_line(self.lineTc)
         self.ax1.add_line(self.lineR)
@@ -72,32 +118,16 @@ class Reactor(object):
         self.ax1.set_xlim(xmin=-1)
         self.ax1.set_ylim(ymin=-10, ymax = 1200)
         self.ax2.set_ylim(ymin=0, ymax = 10E18)
-
-    def simulate(self, fps = 60):
-        #dusturbance introduction
-        #reactitivity     
-        rho = self.cooler.calc_rho(self.i, self.rho0, self.rho1) 
-        if rho == 0:
-            self.TD = 0
-        else:
-            self.TD = self.L/rho + (self.neutron.betaS-rho)/(1.08*rho) #Tutaj zmieniam to: 0.08*self.rho+self.rho na 1.08 rho xd       
-
-        self.update(rho)
-   
-        self.appendToLists(rho)
-     
-        self.i += 1
-        if(self.i>self.dataSize): 
-            self.popFromLists()
-            self.startPoint += self.dt
-
-    def update(self, rho):
+         
+    def __update__(self, rho):
+        """Updates values of n C and thermal properties"""
         #Updating values #W sumie te updaty moznaby cale w 1 linijce
         self.n += ((rho-self.neutron.betaS)/self.L*self.n + sum(self.neutron.hl[1::]*self.C) + self.S)*self.dt
         self.C += ((self.n/self.L)*self.neutron.beta[1::] - self.neutron.hl[1::]*self.C)*self.dt
         self.cooler.update(self.n, self.dt)
     
-    def appendToLists(self, rho):
+    def __appendToLists__(self, rho):
+        """Ads new element to the end of lists"""
         self.listN.append(self.n)
         self.listDT.append(self.TD*10)
         self.listTf.append(self.cooler.Tf)
@@ -106,7 +136,8 @@ class Reactor(object):
         #self.listC.append(0.005*C)            #values are for plot scaling
         self.listR.append(1*10E4*rho) 
     
-    def popFromLists(self):
+    def __popFromLists__(self):
+        """Takes first element of list of variables"""
         self.listN.pop(0)
         self.listDT.pop(0)
         self.listTf.pop(0)
@@ -114,40 +145,9 @@ class Reactor(object):
         self.listW.pop(0)
         #self.listC.append(0.005*C)            #values are for plot scaling
         self.listR.pop(0)
-
-    def init(self):
-        """This function is not actually necessary right now, it was in the past for animation purposes"""
-        style.use('fivethirtyeight')
-        #self.fig = plt.figure()
-        #self.ax1 = self.fig.add_subplot(1,1,1)
-        #self.ax2 = self.ax1.twinx()
-        #plt.xlabel('time [s]',fontsize = 16)
-        self.ax1.set_xlabel('time [s]',fontsize = 16)
-        self.ax2.set_ylabel('N', fontsize = 16)
-        self.ax1.set_ylabel('Temperatures [deg. C], reactivity [pcm]', fontsize = 16)
-        #self.ax1.set_xlim(xmin=-1)
-        plt.xlim(xmin = -1)
-        self.ax1.set_ylim(ymin=-10, ymax = 1200)
-        #Plot options
-        #self.ax1.add_line(self.lineTf)
-        #self.ax1.add_line(self.lineTc)
-        #self.ax1.add_line(self.lineR)
-        #self.ax1.add_line(self.lineDT)
-        #self.ax2.add_line(self.lineN)
-        #print("Rozmiary: ",len(self.listN), len(self.x))
-        '''
-        self.lineTf, = self.ax1.plot([], [], lw=2)
-        self.lineTc, = self.ax1.plot([], [], lw=2)
-        self.lineR, = self.ax1.plot([], [], lw=2)
-        self.lineDT, = self.ax1.plot([], [], lw=2)
-        self.lineN, = self.ax2.plot([], [], lw=2)'''
-        return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
-
-    def animate(self, i):
-        
-        for i in range(0,int(self.interval/5)):
-            self.simulate()
-            
+    
+    def __updatePlot__(self):
+        """Updates (moves etc.) plot with new values"""
         self.x = np.arange(self.startPoint, (self.i-0.5)*self.dt, self.dt)
         self.ax1.set_xlim(xmin = min(self.x), xmax = max(self.x))
         self.ax2.set_ylim(ymin=0, ymax = max(self.listN)*1.5)
@@ -156,60 +156,6 @@ class Reactor(object):
         self.lineR.set_data(self.x,self.listR)
         self.lineDT.set_data(self.x,self.listDT)
         self.lineN.set_data(self.x,self.listN)
-        self.ax1.figure.canvas.draw()
-        
-        return self.lineN,self.lineR,self.lineTf,self.lineTc,self.lineDT
-
-    '''def init(self):
-        self.lineTf.set_data([],[])
-        self.lineTc.set_data([],[])
-        self.lineR.set_data([],[])
-        self.lineDT.set_data([],[])
-        self.lineN.set_data([],[])
-        return self.lineTf,self.lineTc,self.lineR, self.lineDT, self.lineN,
-        ''self.ax1.plot([], [], 'g', markersize = 1)
-        self.ax1.plot([], [], 'b')
-        self.ax1.plot([], [], 'm')
-        self.ax1.plot([], [],'y')
-        self.ax2 = self.ax1.twinx()
-        self.ax2.plot([], [], 'r', markersize = 1)
-        return self.ax1, self.ax2,''
-
-    def animate(self,i):
-
-        for i in range(0,2):
-            self.simulate()
-        self.ax1.clear()
-        self.ax2.clear()
-
-        x = np.arange(self.nt, (self.i-0.5)*self.dt, self.dt)
-        ''self.lineTf.set_data(x,self.listTf)
-        self.lineTc.set_data(x,self.listTc)
-        self.lineR.set_data(x,self.listR)
-        self.lineDT.set_data(x,self.listDT)
-        self.lineN.set_data(x,self.listN)
-        return self.lineTf,self.lineTc,self.lineR, self.lineDT, self.lineN,
-        ''
-        #print('final coolant temp =  ' + str(round(Tc,2)) + ' K;       deltaTc = ' + str(round(Tc-Tce,2)) + ' K')
-        #print('final fuel temp =     ' + str(round(Tf,2)) + ' K;      deltaTf = ' + str(round(Tf-Tfe)) + ' K')
-        #print('final power output =  ' + str(round(aF*n*10E-9,3)) + ' GW,    which is ' + str(round(n/ne,2)) + " [P1/P0]")
-        #print ('')
-        #if Tf > 1400:
-        #    print('meltdown')
-
-        self.ax1.plot(x, self.listTf, 'g', markersize = 1)
-        self.ax1.plot(x, self.listTc, 'b')
-        self.ax1.plot(x, self.listR, 'm')
-        self.ax1.plot(x,self.listDT,'y')
-        self.ax2 = self.ax1.twinx()
-        self.ax2.plot(x, self.listN, 'r', markersize = 1)
-        #ax1.plot(ax, listTcIN, 'b', markersize = 1)
-        #ax1	.plot(ax, listW, 'r', markersize = 1)
-        #plt.hold(True)
-        
-        #ax2.set_yscale('log')
-        #plt.show() 
-        return self.ax1, self.ax2,  #'''
 
 class Neutron(object):
     """This class represents neutron and its properties"""
@@ -282,13 +228,3 @@ class Cooler(object):
     def update(self, n, dt):
         self.Tf += ((self.aF*n - self.h*(self.Tf-self.Tc))/(self.mF*self.CpF))*dt
         self.Tc += ((self.h*(self.Tf-self.Tc)-2*self.W*self.CpC*(self.Tc-self.TcIN))/(self.mC*self.CpC))*dt
-
-
-#    zmienne:
-#moc reaktora
-#liczba neutronów
-#temperatura paliwa
-#temperatura wody na wejściu
-#temperatura wody na wyjściu
-#strumień wody (ew moc pompy)
-#pozycja prętów sterujących
