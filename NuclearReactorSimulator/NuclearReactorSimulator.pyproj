@@ -23,6 +23,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="NuclearReactorSimulator.py" />
+    <Compile Include="PWR-PKS-w-Feedbacks-normal-unphysical.py" />
+    <Compile Include="PWR-PKS-w-Feedbacks.py" />
+    <Compile Include="reactor.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
