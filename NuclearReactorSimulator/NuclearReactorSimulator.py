@@ -6,7 +6,7 @@ from tkinter.messagebox import showinfo
 from PIL import ImageTk, Image
 import time
 
-class MainApplication(tk.Tk):
+'''class MainApplication(tk.Tk):
     def __init__(self,parent):
         tk.Tk.__init__(self,parent)
         self.parent = parent
@@ -83,46 +83,7 @@ class ReactorWindow(tk.Canvas):
 
         self.fileName = tk.PhotoImage(file = name)
         self.nowy = self.fileName.subsample(2,2)
-        self.background = self.create_image(0,0, image = self.nowy, anchor = NW)
-
-'''fig = plt.figure()
-ax1 = fig.add_subplot(1,1,1)
-ax2 = ax1.twinx()
-reactor = Reactor()
-
-def animate(i):
-    
-    for i in range(0,10):
-        reactor.simulate()
-    ax1.clear()
-    ax2.clear()
-    
-
-    ax = np.arange(reactor.nt, (reactor.i-0.5)*reactor.dt, reactor.dt)
-
-    #print('final coolant temp =  ' + str(round(Tc,2)) + ' K;       deltaTc = ' + str(round(Tc-Tce,2)) + ' K')
-    #print('final fuel temp =     ' + str(round(Tf,2)) + ' K;      deltaTf = ' + str(round(Tf-Tfe)) + ' K')
-    #print('final power output =  ' + str(round(aF*n*10E-9,3)) + ' GW,    which is ' + str(round(n/ne,2)) + " [P1/P0]")
-    #print ('')
-    #if Tf > 1400:
-    #    print('meltdown')
-    #print("Liczba ax: ", len(ax), self.nt, self.i*self.dt, self.dt)
-        
-    #print("Rozmiary tablic: ", len(self.listTf), len(self.listTc), len(self.listR), len(self.listDT), len(self.listN))
-    ax1.plot(ax, reactor.listTf, 'g', markersize = 1)
-    ax1.plot(ax, reactor.listTc, 'b')
-    ax1.plot(ax, reactor.listR, 'm')
-    ax1.plot(ax,reactor.listDT,'y')
-    
-    
-    ax2.plot(ax, reactor.listN, 'r', markersize = 1)
-    
-    #ax1.plot(ax, listTcIN, 'b', markersize = 1)
-    #ax1	.plot(ax, listW, 'r', markersize = 1)
-    #plt.hold(True)
-
-    #ax2.set_yscale('log')
-    #plt.show() '''  
+        self.background = self.create_image(0,0, image = self.nowy, anchor = NW)'''
 
 if __name__ == "__main__":
  

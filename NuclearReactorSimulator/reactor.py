@@ -11,7 +11,7 @@ class Reactor(object):
         """Constructor"""
          #      TD, Tf, Tc, dTf, dTc, dC1-6, dn, rho, TcIN, W, C1-6  sie zmienia
         #Lot of additional constants etc.
-        # calculation parameters (one chyba bd i tak przesylane)
+        # calculation parameters
         self.nt = -1             #negative time
         self.dt = dt
         self.dataSize = dataSize
@@ -31,9 +31,9 @@ class Reactor(object):
         self.cooler = Cooler(self.n) 
 
         #Preparing rest variables
-        self.__variablePreapre__()
+        self.__preapreVariable__()
         #Preparing plot
-        self.__plotOptions__()
+        self.__preparePlot__()
 
     def simulate(self, fps = 60):
         """Simulates behaviour of a reactor in dt time step"""
@@ -100,17 +100,16 @@ class Reactor(object):
 
         self.startPoint = self.nt
         self.x = []
-        self.lineTf = Line2D(self.x, self.listTf, color = 'g', animated=True, markersize = 1, linewidth = 2)
-        self.lineTc = Line2D(self.x, self.listTc, color = 'b', animated=True)
-        self.lineR = Line2D(self.x, self.listR, color = 'm', animated=True)
-        self.lineDT = Line2D(self.x, self.listDT, color = 'y', animated=True)
-        self.lineN = Line2D(self.x, self.listN, color = 'r', animated=True, markersize = 1, linewidth = 2)
+        self.lineTf = Line2D(self.x, self.listTf, color = 'g', animated=True, markersize = 1, linewidth = 2, label = "Tf")
+        self.lineTc = Line2D(self.x, self.listTc, color = 'b', animated=True, label = "Tc")
+        self.lineR = Line2D(self.x, self.listR, color = 'm', animated=True, label = "R")
+        self.lineDT = Line2D(self.x, self.listDT, color = 'y', animated=True, label = "DT")
+        self.lineN = Line2D(self.x, self.listN, color = 'r', animated=True, markersize = 1, linewidth = 2, label = "Neutron number")
         self.ax1.add_line(self.lineTf)
         self.ax1.add_line(self.lineTc)
         self.ax1.add_line(self.lineR)
         self.ax1.add_line(self.lineDT)
         self.ax2.add_line(self.lineN)
-
         style.use('fivethirtyeight')
         self.ax1.set_xlabel('time [s]',fontsize = 16)
         self.ax2.set_ylabel('N', fontsize = 16)
@@ -118,7 +117,16 @@ class Reactor(object):
         self.ax1.set_xlim(xmin=-1)
         self.ax1.set_ylim(ymin=-10, ymax = 1200)
         self.ax2.set_ylim(ymin=0, ymax = 10E18)
-         
+        ###LEGEND
+        legend2 = plt.legend(handles=[self.lineN], bbox_to_anchor=(0.2, 0., 1., 1), loc=9, fontsize = 'small',
+           ncol=1,  borderaxespad=0.)
+        ax = plt.gca().add_artist(legend2)
+        plt.legend(handles=[self.lineTf,self.lineTc, self.lineR,self.lineDT],bbox_to_anchor=(1.05, 0., 1., 1), loc=1, fontsize = 'small',
+           ncol=1, mode="expand", borderaxespad=0.)
+        plt.subplots_adjust(left=0.11, bottom=0.11, right=0.75, top=0.88, wspace=0.2, hspace=0.2)
+        #bbox_props = dict(boxstyle='round',fc='w', ec='k',lw=1, )
+        #self.annotation = self.ax2.annotate(str(0), xycoords='figure fraction', xy=(1,1),textcoords='axes fraction', xytext = (0.95, 0.94), bbox=bbox_props)
+        
     def __update__(self, rho):
         """Updates values of n C and thermal properties"""
         #Updating values #W sumie te updaty moznaby cale w 1 linijce
@@ -156,6 +164,10 @@ class Reactor(object):
         self.lineR.set_data(self.x,self.listR)
         self.lineDT.set_data(self.x,self.listDT)
         self.lineN.set_data(self.x,self.listN)
+        #self.lineN.set_label(str('Neutron number:'+str(self.listN[-1])))
+       
+    
+        
 
 class Neutron(object):
     """This class represents neutron and its properties"""
